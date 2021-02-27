@@ -6,7 +6,80 @@
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
   <script type="text/babel">
+    const handleResponse = (xhr, parse) => {
+      let content = document.querySelector("#content");
 
+      switch (xhr.status){
+        case 200:
+          content.innerHTML = '<b>Success!</b>';
+          break;
+        case 404:
+          content.innerHTML = '<b>Error: Resource not Found</b>';
+          break;
+        default:
+          content.innerHTML = '<b>Default response, bad error code?</b>';
+          break;
+      }
+
+      if (parse){
+        //elements
+        let id = document.createElement('h2');
+        let message = document.createElement('p');
+        let response = JSON.parse(xhr.response);
+        //populate
+        console.log(response);
+        if (response['id']){
+          id.innerHTML = response['id'];
+        }
+        message.innerHTML = response['message'];
+        //attach
+        content.appendChild(id);
+        content.appendChild(message);
+      }
+    }
+
+    const makeRequest = (event, method, url) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open(method, url);
+      xhr.setRequestHeader('Accept', 'application/json');
+      if (method === 'get'){
+        xhr.onload = () => {
+          handleResponse(xhr, true);
+        }
+      } else {
+        xhr.onload = () => {
+          handleResponse(xhr, false);
+        }
+      }
+
+      event.preventDefault();
+      xhr.send();
+      return false;
+    }
+
+    //init
+    const init = () => {
+      const nf = document.querySelector("#nameForm");
+      const uf = document.querySelector("#userForm");
+      
+      //make a get or head request for user list
+      const userRequest = (e) => {
+        let url = document.querySelector("#urlField").value;
+        let method = document.querySelector("#methodSelect").value;
+        makeRequest(e, method, url);
+      }
+
+      //make a post request to update user data
+      const postUpdate = (e) => {
+        
+      }
+
+      //set event listeners
+      nf.addEventListener('submit', postUpdate);
+      uf.addEventListener('submit', userRequest);
+    }
+
+    window.onload = init;
   </script>
 </head>
 <body>
