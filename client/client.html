@@ -6,22 +6,31 @@
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
   <script type="text/babel">
-    const handleResponse = (xhr, parse) => {
+    const handleResponse = (xhr, parsejson) => {
       let content = document.querySelector("#content");
 
       switch (xhr.status){
         case 200:
           content.innerHTML = '<b>Success!</b>';
           break;
+        case 201:
+          content.innerHTML = '<b>Entry Added!</b>';
+          break;
+        case 204:
+          content.innerHTML = '<b>Entry Updated!</b>';
+          break;
+        case 400:
+          content.innerHTML = '<b>Request failed: Bad Request</b>';
+          break;
         case 404:
           content.innerHTML = '<b>Error: Resource not Found</b>';
           break;
         default:
-          content.innerHTML = '<b>Default response, bad error code?</b>';
+          content.innerHTML = '<b>Default response, bad error code from server?</b>';
           break;
       }
 
-      if (parse){
+      if (parsejson && xhr.status != 204){
         //elements
         let id = document.createElement('h2');
         let message = document.createElement('p');
@@ -31,7 +40,16 @@
         if (response['id']){
           id.innerHTML = response['id'];
         }
-        message.innerHTML = response['message'];
+        if (response['message']){
+          message.innerHTML = response['message'];
+        }
+        else {
+          let bigstring = "";
+          for (let currentname in response['users']){
+            bigstring += `<span>${response['users'][currentname]['name']} | ${response['users'][currentname]['age']}</span><br>`;
+          }          
+          message.innerHTML = bigstring
+        }
         //attach
         content.appendChild(id);
         content.appendChild(message);
@@ -57,6 +75,16 @@
       return false;
     }
 
+    const makePostRequest = (event, url, formdata) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', url);
+      xhr.setRequestHeader('Accept', 'application/json');
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.onload = () => handleResponse(xhr, true);
+      event.preventDefault();
+      xhr.send(formdata);
+    }
+
     //init
     const init = () => {
       const nf = document.querySelector("#nameForm");
@@ -71,7 +99,10 @@
 
       //make a post request to update user data
       const postUpdate = (e) => {
-        
+        let name = document.querySelector("#nameField").value;
+        let age = document.querySelector("#ageField").value;
+        let params = `name=${name}&age=${age}`;
+        makePostRequest(e, '/addUser', params);
       }
 
       //set event listeners
